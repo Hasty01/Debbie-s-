@@ -60,6 +60,7 @@ export const Navigation: React.FC = () => {
 
   // Shipping & Checkout states
   const [shippingName, setShippingName] = useState("");
+  const [shippingPhone, setShippingPhone] = useState("+254711111111");
   const [shippingAddress, setShippingAddress] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("+254700000000");
   const [ownerEmail, setOwnerEmail] = useState("owner@debbiegarmets.com");
@@ -69,10 +70,11 @@ export const Navigation: React.FC = () => {
     if (currentUser) {
       setShippingName(currentUser.fullName);
       if (currentUser.phone) {
-        // If logged-in user has a phone, we can default owner/premium number references
+        setShippingPhone(currentUser.phone);
       }
     } else {
       setShippingName("Marcus Aurelios");
+      setShippingPhone("+254711111111");
     }
     setShippingAddress("Villa Augusta, Via del Corso 24, Rome, IT");
   }, [currentUser]);
@@ -102,7 +104,6 @@ export const Navigation: React.FC = () => {
 
   const handleCheckoutSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsCheckingOut(true);
     const ref = `AE-${Math.floor(100000 + Math.random() * 900000)}`;
     setGeneratedRef(ref);
 
@@ -114,7 +115,7 @@ export const Navigation: React.FC = () => {
       buyerName: shippingName,
       buyerEmail: currentUser?.email || "guest@debbiegarmets.com",
       buyerRole: currentUser?.role || "guest",
-      buyerPhone: currentUser?.phone || "+254711111111",
+      buyerPhone: shippingPhone,
       items: cart.map(item => ({
         name: item.product.name,
         quantity: item.quantity,
@@ -132,30 +133,33 @@ export const Navigation: React.FC = () => {
     
     localStorage.setItem("aera-simulated-orders", JSON.stringify([newOrder, ...savedOrders]));
 
-    setTimeout(() => {
-      setIsCheckingOut(false);
-      setCheckoutComplete(true);
-      addToast(`Order ${ref} appraised & synced successfully!`, "success");
-    }, 1500);
+    // Directly trigger WhatsApp checkout using the new ref
+    const text = encodeURIComponent(getSimulatedMessageText(ref));
+    const cleanPhone = ownerPhone.replace(/[+\s-]/g, "");
+    window.open(`https://wa.me/${cleanPhone}?text=${text}`, "_blank");
+    addToast(`Order ${ref} created! Secure WhatsApp checkout launched.`, "success");
+
+    setCheckoutComplete(true);
   };
 
-  const getSimulatedMessageText = () => {
-    const itemsText = cart.map(item => `• ${item.quantity}x ${item.product.name} (Size: ${item.selectedSize}, Color: ${item.selectedColor.name}) - KSh ${item.product.price * item.quantity}`).join("\n");
+  const getSimulatedMessageText = (referenceOverride?: string) => {
+    const itemsText = cart.map(item => `• ${item.quantity}x ${item.product.name} (Size: ${item.selectedSize}, Color: ${item.selectedColor.name}) - KSh ${(item.product.price * item.quantity).toLocaleString()}`).join("\n");
+    const refToUse = referenceOverride || generatedRef || "AE-PENDING";
     
-    return `Atelier Debbie Garments Couture Order Appraised - Ref: ${generatedRef}
+    return `Atelier Debbie Garments Couture Order Appraised - Ref: ${refToUse}
 
 Buyer Details:
 - Name: ${shippingName}
+- Contact Phone: ${shippingPhone}
 - Status: ${currentUser ? (currentUser.role === "premium" ? "👑 Premium Member" : "💼 Business Owner") : "Guest User"}
 - Member Email: ${currentUser?.email || "Guest"}
-- Member Phone: ${currentUser?.phone || "None Synchronized"}
 
 Appraised Order Items:
 ${itemsText}
 
-Subtotal: KSh ${cartSubtotal}
+Subtotal: KSh ${cartSubtotal.toLocaleString()}
 Delivery Service: Complimentary
-Total Amount: KSh ${cartTotal}
+Total Amount: KSh ${cartTotal.toLocaleString()}
 
 Delivery Courier Address:
 ${shippingAddress}
@@ -790,11 +794,11 @@ Debbie Garments Atelier System`;
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="bg-zinc-50 dark:bg-charcoal border border-zinc-200 dark:border-white/10 rounded-lg p-4 mb-4"
+                            className="bg-zinc-50 dark:bg-charcoal border border-zinc-200 dark:border-white/10 rounded-lg p-4 mb-4 text-left max-h-[480px] overflow-y-auto"
                           >
-                            <form onSubmit={handleCheckoutSubmit} className="space-y-3">
+                            <form onSubmit={handleCheckoutSubmit} className="space-y-3.5">
                               <p className="text-[10px] font-mono tracking-widest text-luxury-champagne uppercase flex items-center gap-1 font-semibold">
-                                <Sparkles className="w-3.5 h-3.5" /> Secure Checkout Simulation
+                                <Sparkles className="w-3.5 h-3.5" /> Luxury WhatsApp Checkout
                               </p>
                               <div>
                                 <label className="block text-[9px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">Shipping Name</label>
@@ -803,6 +807,17 @@ Debbie Garments Atelier System`;
                                   required
                                   value={shippingName}
                                   onChange={(e) => setShippingName(e.target.value)}
+                                  className="w-full text-xs p-2 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 focus:ring-luxury-champagne text-zinc-900 dark:text-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[9px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">Your Mobile Phone</label>
+                                <input
+                                  type="tel"
+                                  required
+                                  value={shippingPhone}
+                                  onChange={(e) => setShippingPhone(e.target.value)}
+                                  placeholder="+254 711 111111"
                                   className="w-full text-xs p-2 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 focus:ring-luxury-champagne text-zinc-900 dark:text-white"
                                 />
                               </div>
@@ -816,11 +831,30 @@ Debbie Garments Atelier System`;
                                   className="w-full text-xs p-2 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 focus:ring-luxury-champagne text-zinc-900 dark:text-white"
                                 />
                               </div>
+                              <div>
+                                <label className="block text-[9px] uppercase tracking-wider text-zinc-505 dark:text-zinc-400 mb-1">Boutique Owner WhatsApp Number</label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={ownerPhone}
+                                  onChange={(e) => setOwnerPhone(e.target.value)}
+                                  placeholder="+254 700 000000"
+                                  className="w-full text-xs p-2 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 focus:ring-luxury-champagne text-zinc-900 dark:text-white"
+                                />
+                              </div>
+
+                              <div className="bg-zinc-100 dark:bg-zinc-950 p-2.5 rounded border border-zinc-200 dark:border-white/10 mt-1 select-none">
+                                <span className="block text-[8px] uppercase tracking-widest text-[#D4AF37] mb-1.5 font-bold font-mono">Real-time Transmission Preview</span>
+                                <pre className="font-mono text-[9px] whitespace-pre-wrap leading-tight text-zinc-600 dark:text-zinc-400 max-h-[110px] overflow-y-auto break-all">
+                                  {getSimulatedMessageText("AE-PREVIEW")}
+                                </pre>
+                              </div>
+
                               <button
                                 type="submit"
-                                className="w-full py-2.5 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-955 text-xs font-mono uppercase tracking-widest hover:bg-luxury-champagne dark:hover:bg-luxury-champagne hover:text-neutral-900 dark:hover:text-[#121212] transition-colors cursor-none rounded"
+                                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-mono uppercase tracking-widest transition-transform hover:scale-[1.01] active:scale-95 cursor-none rounded font-bold flex justify-center items-center gap-2"
                               >
-                                Place Simulated Order
+                                <Sparkles className="w-4 h-4" /> Place Order via WhatsApp
                               </button>
                             </form>
                           </motion.div>

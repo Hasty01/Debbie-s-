@@ -16,6 +16,7 @@ import { Newsletter } from "./components/Newsletter";
 import { Footer } from "./components/Footer";
 import { ToastNotification } from "./components/Toast";
 import { QuickViewModal } from "./components/QuickViewModal";
+import { InteractiveGridBackground } from "./components/InteractiveGridBackground";
 import { Sparkles, Eye, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -111,8 +112,11 @@ function MainAppContent() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.2 }}
-          className="min-h-screen bg-zinc-50 dark:bg-matte-black text-zinc-900 dark:text-[#F5F5F5] relative select-none"
+          className="min-h-screen bg-zinc-50 dark:bg-matte-black text-zinc-900 dark:text-[#F5F5F5] relative select-none overflow-hidden"
         >
+          {/* Interactive grid and constellation particle nodes (Hut8 Background effect) */}
+          <InteractiveGridBackground />
+
           {/* Advanced visual micro element: Atmospheric noise texture fallback / subtle border */}
           <div className="fixed inset-0 pointer-events-none z-[100] border-[12px] border-zinc-300/30 dark:border-charcoal/50" />
 
