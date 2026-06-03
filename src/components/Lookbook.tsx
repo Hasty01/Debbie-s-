@@ -106,7 +106,7 @@ export const Lookbook: React.FC = () => {
                       <h5 className="text-xs font-medium text-white tracking-wide mt-1.5 font-sans">
                         {featuredProduct.name}
                       </h5>
-                      <span className="text-[11px] font-mono text-zinc-450">${featuredProduct.price}</span>
+                      <span className="text-[11px] font-mono text-zinc-450">KSh {featuredProduct.price}</span>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-luxury-champagne hover:text-zinc-950 transition-all text-white">
                       <ArrowRight className="w-4 h-4" />
@@ -127,7 +127,7 @@ export const Lookbook: React.FC = () => {
         </div>
         <h4 className="font-serif font-light text-xl text-zinc-150 mb-3">Order Physical Sicily Volume</h4>
         <p className="text-xs text-zinc-450 mb-6 leading-relaxed max-w-sm mx-auto">
-          Every order above $1,000 automatically includes our hand-pasted 240g cold-pressed Sicily linen lookbook magazine.
+          Every order above KSh 100,000 automatically includes our hand-pasted 240g cold-pressed Sicily linen lookbook magazine.
         </p>
         <button
           onClick={() => addToast("Sicilian Lookbook added to qualified basket items", "success")}

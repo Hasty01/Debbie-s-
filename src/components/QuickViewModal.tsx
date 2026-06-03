@@ -22,21 +22,7 @@ export const QuickViewModal: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"details" | "reviews">("details");
 
-  const [showMagnifier, setShowMagnifier] = useState(false);
-  const [[imgWidth, imgHeight], setSize] = useState([0, 0]);
-  const [[mouseX, mouseY], setMouseCoords] = useState([0, 0]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const elem = e.currentTarget;
-    const { top, left, width, height } = elem.getBoundingClientRect();
-    
-    // Calculate cursor position relative to the container
-    const x = e.clientX - left;
-    const y = e.clientY - top;
-    
-    setMouseCoords([x, y]);
-    setSize([width, height]);
-  };
+  // No magnifier/zoom active
 
   // Sync state variables whenever dynamic popup product switches
   useEffect(() => {
@@ -91,10 +77,7 @@ export const QuickViewModal: React.FC = () => {
           {/* Left panel: Image gallery presentation */}
           <div className="w-full md:w-1/2 p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-205 dark:border-white/10 bg-zinc-50 dark:bg-charcoal">
             <div 
-              onMouseEnter={() => setShowMagnifier(true)}
-              onMouseLeave={() => setShowMagnifier(false)}
-              onMouseMove={handleMouseMove}
-              className="relative aspect-[4/5] w-full rounded-xl overflow-hidden bg-zinc-100 dark:bg-matte-black shadow-inner group cursor-crosshair"
+              className="relative aspect-[4/5] w-full rounded-xl overflow-hidden bg-zinc-100 dark:bg-matte-black shadow-inner group cursor-pointer"
             >
               <motion.img
                 key={activeImage}
@@ -105,59 +88,6 @@ export const QuickViewModal: React.FC = () => {
                 className="w-full h-full object-cover object-center"
                 referrerPolicy="no-referrer"
               />
-
-              {/* Appraiser's Loupe (High-fidelity magnifying glass hover effect) */}
-              {showMagnifier && (
-                <div
-                  style={{
-                    position: "absolute",
-                    pointerEvents: "none",
-                    height: "160px",
-                    width: "160px",
-                    borderRadius: "50%",
-                    border: "1.5px solid #00F0FF", // Neon Blue Loupe border
-                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.75), inset 0 0 15px rgba(0,0,0,0.5), 0 0 0 4px rgba(0,0,0,0.3)",
-                    backgroundColor: "#000",
-                    // Center the loupe at coordinates
-                    left: `${mouseX - 80}px`,
-                    top: `${mouseY - 80}px`,
-                    backgroundImage: `url(${activeImage})`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: `${imgWidth * 2.5}px ${imgHeight * 2.5}px`,
-                    backgroundPosition: `${-mouseX * 2.5 + 80}px ${-mouseY * 2.5 + 80}px`,
-                    zIndex: 30,
-                  }}
-                  className="hidden md:block"
-                >
-                  {/* Fine Appraiser Reticle Center-lines */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-4 h-4 relative">
-                      <div className="absolute top-1/2 left-0 right-0 h-[0.5px] bg-[#00F0FF]/40 -translate-y-1/2" />
-                      <div className="absolute left-1/2 top-0 bottom-0 w-[0.5px] bg-[#00F0FF]/40 -translate-x-1/2" />
-                      <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 rounded-full bg-neon-blue -translate-x-1/2 -translate-y-1/2 opacity-65" />
-                    </div>
-                  </div>
-                  
-                  {/* Subtle Zoom multiplier label inside loupe */}
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[7px] font-mono tracking-[0.25em] text-neon-blue bg-black/75 px-1.5 py-0.5 rounded-xs uppercase font-medium">
-                    2.5x Loupe
-                  </div>
-                </div>
-              )}
-
-              {/* Loupe active coordinate tracker */}
-              {showMagnifier && (
-                <div className="absolute bottom-4 left-4 z-10 pointer-events-none hidden md:block">
-                  <span className="px-2 py-1 text-[8px] font-mono tracking-[0.15em] uppercase bg-matte-black/90 text-neon-blue backdrop-blur-md rounded border border-white/10 shadow-md">
-                    Weave Loupe • X:{Math.round((mouseX / (imgWidth || 1)) * 100)}% Y:{Math.round((mouseY / (imgHeight || 1)) * 100)}%
-                  </span>
-                </div>
-              )}
-
-              {/* Informative hover-to-inspect overlay badge */}
-              <div className="absolute top-4 left-4 z-10 pointer-events-none bg-matte-black/65 backdrop-blur-md px-2.5 py-1 rounded border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-[8px] font-mono tracking-[0.25em] text-[#00F0FF] uppercase hidden md:inline-block">
-                Hover to inspect textile weave
-              </div>
             </div>
 
             {/* Galleria Thumbnails bar */}
@@ -203,7 +133,7 @@ export const QuickViewModal: React.FC = () => {
               <div className="space-y-2">
                 <h3 className="font-serif text-2xl md:text-3xl font-light tracking-wide text-zinc-900 dark:text-white">{product.name}</h3>
                 <div className="flex items-center gap-4">
-                  <span className="text-xl font-mono font-medium text-zinc-800 dark:text-white">${product.price}</span>
+                  <span className="text-xl font-mono font-medium text-zinc-800 dark:text-white">KSh {product.price}</span>
                   <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-[#121212] border border-zinc-200 dark:border-white/10 px-2.5 py-1 text-xs font-mono rounded-md text-zinc-600 dark:text-zinc-300">
                     <Star className="w-3.5 h-3.5 fill-luxury-champagne text-luxury-champagne" />
                     <span>{product.rating} / 5</span>

@@ -4,9 +4,14 @@ import { ArrowDownRight, Sparkles } from "lucide-react";
 
 export const Hero: React.FC = () => {
   const handleScrollDown = () => {
-    const section = document.querySelector("#collections");
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth" });
+    const lenis = (window as any).lenis;
+    if (lenis) {
+      lenis.scrollTo("#collections", { duration: 1.5 });
+    } else {
+      const section = document.querySelector("#collections");
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+      }
     }
   };
 
@@ -87,8 +92,13 @@ export const Hero: React.FC = () => {
           <motion.div variants={textVariants} className="mt-8 flex flex-wrap items-center gap-4">
             <button
               onClick={() => {
-                const colls = document.querySelector("#collections");
-                if (colls) colls.scrollIntoView({ behavior: "smooth" });
+                const lenis = (window as any).lenis;
+                if (lenis) {
+                  lenis.scrollTo("#collections", { duration: 1.5 });
+                } else {
+                  const colls = document.querySelector("#collections");
+                  if (colls) colls.scrollIntoView({ behavior: "smooth" });
+                }
               }}
               className="px-6 py-3 bg-white text-zinc-950 hover:bg-luxury-champagne rounded-lg font-mono text-xs uppercase tracking-widest font-semibold flex items-center gap-2 transition-all cursor-none border border-white group"
             >
@@ -97,8 +107,13 @@ export const Hero: React.FC = () => {
             </button>
             <button
               onClick={() => {
-                const book = document.querySelector("#lookbook");
-                if (book) book.scrollIntoView({ behavior: "smooth" });
+                const lenis = (window as any).lenis;
+                if (lenis) {
+                  lenis.scrollTo("#lookbook", { duration: 1.5 });
+                } else {
+                  const book = document.querySelector("#lookbook");
+                  if (book) book.scrollIntoView({ behavior: "smooth" });
+                }
               }}
               className="px-6 py-3 glass-panel border border-white/20 text-white hover:border-white rounded-lg font-mono text-xs uppercase tracking-[0.15em] transition-all cursor-none"
             >

@@ -90,9 +90,14 @@ export const Navigation: React.FC = () => {
 
   const jumpToSection = (selector: string) => {
     setMobileMenuOpen(false);
-    const element = document.querySelector(selector);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+    const lenis = (window as any).lenis;
+    if (lenis) {
+      lenis.scrollTo(selector, { duration: 1.5 });
+    } else {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
     }
   };
 
@@ -129,7 +134,14 @@ export const Navigation: React.FC = () => {
           {/* Centered Brand Luxury Logo */}
           <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
             <span
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              onClick={() => {
+                const lenis = (window as any).lenis;
+                if (lenis) {
+                  lenis.scrollTo(0, { duration: 1.5 });
+                } else {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
               className="font-serif text-lg md:text-2xl font-light tracking-[0.2em] text-current cursor-none hover:opacity-85 transition-opacity uppercase"
             >
               Debbie Garmets
@@ -353,7 +365,7 @@ export const Navigation: React.FC = () => {
                           </h4>
                           <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">{product.description}</p>
                           <span className="text-xs font-mono font-semibold text-zinc-700 dark:text-[#F5F5F5]">
-                            ${product.price}
+                            KSh {product.price}
                           </span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-zinc-500 group-hover:translate-x-1 transition-transform" />
@@ -428,7 +440,7 @@ export const Navigation: React.FC = () => {
                         />
                         <div className="flex-1 justify-between">
                           <h4 className="text-xs tracking-wide font-medium text-zinc-900 dark:text-white">{item.name}</h4>
-                          <span className="text-xs font-mono font-medium text-zinc-650 dark:text-zinc-300">${item.price}</span>
+                          <span className="text-xs font-mono font-medium text-zinc-650 dark:text-zinc-300">KSh {item.price}</span>
                           <div className="flex gap-3 mt-2">
                             <button
                               onClick={() => {
@@ -565,7 +577,7 @@ export const Navigation: React.FC = () => {
                             <div className="flex-1 select-none">
                               <div className="flex justify-between">
                                 <h4 className="text-xs md:text-sm font-medium tracking-wide text-zinc-900 dark:text-white">{item.product.name}</h4>
-                                <span className="text-xs font-mono font-semibold text-zinc-650 dark:text-zinc-300">${item.product.price * item.quantity}</span>
+                                <span className="text-xs font-mono font-semibold text-zinc-650 dark:text-zinc-300">KSh {item.product.price * item.quantity}</span>
                               </div>
                               <p className="text-[11px] font-mono text-luxury-champagne mt-1">
                                 Size: {item.selectedSize} • Color: {item.selectedColor.name}
@@ -608,15 +620,15 @@ export const Navigation: React.FC = () => {
                       <div className="space-y-2 mb-4">
                         <div className="flex justify-between text-xs tracking-wide">
                           <span className="text-zinc-500 dark:text-zinc-400">Subtotal Valuation:</span>
-                          <span className="font-mono font-semibold text-zinc-705 dark:text-zinc-200">${cartSubtotal}</span>
+                          <span className="font-mono font-semibold text-zinc-705 dark:text-zinc-200">KSh {cartSubtotal}</span>
                         </div>
                         <div className="flex justify-between text-xs tracking-wide">
                           <span className="text-zinc-550 dark:text-zinc-400">Courier Insurance:</span>
-                          <span className="font-mono text-zinc-650 dark:text-zinc-200">{shippingCharge === 0 ? "Complimentary" : `$${shippingCharge}`}</span>
+                          <span className="font-mono text-zinc-650 dark:text-zinc-200">{shippingCharge === 0 ? "Complimentary" : `KSh ${shippingCharge}`}</span>
                         </div>
                         <div className="flex justify-between text-sm tracking-wide font-medium border-t border-zinc-200 dark:border-white/10 pt-2 font-serif">
                           <span className="text-zinc-800 dark:text-zinc-300">Total Appraised:</span>
-                          <span className="font-mono text-zinc-950 dark:text-[#F5F5F5] font-bold">${cartTotal}</span>
+                          <span className="font-mono text-zinc-950 dark:text-[#F5F5F5] font-bold">KSh {cartTotal}</span>
                         </div>
                       </div>
 

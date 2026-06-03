@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from "react";
 import { AppProvider, useApp } from "./components/AppContext";
+import Lenis from "lenis";
 import { Navigation } from "./components/Navigation";
 import { Hero } from "./components/Hero";
 import { Collections } from "./components/Collections";
@@ -74,6 +75,31 @@ const PreLoader: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 // Main layout element inside context wrapper
 function MainAppContent() {
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (loading) return;
+
+    // Instantiate premium inertial scrolling mechanics
+    const lenis = new Lenis({
+      duration: 1.4,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+
+    (window as any).lenis = lenis;
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+      (window as any).lenis = null;
+    };
+  }, [loading]);
 
   return (
     <AnimatePresence mode="wait">
