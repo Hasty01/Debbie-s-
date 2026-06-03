@@ -24,6 +24,7 @@ export const Navigation: React.FC = () => {
     cart,
     removeFromCart,
     updateCartQuantity,
+    clearCart,
     wishlist,
     toggleWishlist,
     searchOpen,
@@ -33,7 +34,11 @@ export const Navigation: React.FC = () => {
     wishlistOpen,
     setWishlistOpen,
     setActiveQuickViewProduct,
-    addToast
+    addToast,
+    currentUser,
+    loginUser,
+    signupUser,
+    logoutUser,
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -44,11 +49,33 @@ export const Navigation: React.FC = () => {
   
   // User Account Simulated State
   const [accountOpen, setAccountOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState({
-    name: "Debbie Garmets Collector",
-    email: "collector@debbiegarmets.com",
-    tier: "Obsidian Elite Member"
-  });
+  
+  // Simulated authentication form states
+  const [authTab, setAuthTab] = useState<"login" | "signup">("login");
+  const [authRole, setAuthRole] = useState<"premium" | "business_owner">("premium");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authFullName, setAuthFullName] = useState("");
+  const [authPhone, setAuthPhone] = useState("");
+  const [authBusinessName, setAuthBusinessName] = useState("");
+
+  // Shipping & Checkout states
+  const [shippingName, setShippingName] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("+254700000000");
+  const [ownerEmail, setOwnerEmail] = useState("owner@debbiegarmets.com");
+  const [generatedRef, setGeneratedRef] = useState("");
+
+  useEffect(() => {
+    if (currentUser) {
+      setShippingName(currentUser.fullName);
+      if (currentUser.phone) {
+        // If logged-in user has a phone, we can default owner/premium number references
+      }
+    } else {
+      setShippingName("Marcus Aurelios");
+    }
+    setShippingAddress("Villa Augusta, Via del Corso 24, Rome, IT");
+  }, [currentUser]);
 
   // Track page scroll to apply blur background
   useEffect(() => {
@@ -76,11 +103,79 @@ export const Navigation: React.FC = () => {
   const handleCheckoutSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsCheckingOut(true);
+    const ref = `AE-${Math.floor(100000 + Math.random() * 900000)}`;
+    setGeneratedRef(ref);
+
+    // Save order details to persistent queue log so Business Owner can view synced orders
+    const savedOrdersStr = localStorage.getItem("aera-simulated-orders");
+    const savedOrders = savedOrdersStr ? JSON.parse(savedOrdersStr) : [];
+    const newOrder = {
+      id: ref,
+      buyerName: shippingName,
+      buyerEmail: currentUser?.email || "guest@debbiegarmets.com",
+      buyerRole: currentUser?.role || "guest",
+      buyerPhone: currentUser?.phone || "+254711111111",
+      items: cart.map(item => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        size: item.selectedSize,
+        color: item.selectedColor.name,
+        price: item.product.price
+      })),
+      total: cartTotal,
+      address: shippingAddress,
+      date: new Date().toLocaleDateString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    };
+    
+    localStorage.setItem("aera-simulated-orders", JSON.stringify([newOrder, ...savedOrders]));
+
     setTimeout(() => {
       setIsCheckingOut(false);
       setCheckoutComplete(true);
-      addToast("Order submitted successfully to Debbie Garmets", "success");
-    }, 2500);
+      addToast(`Order ${ref} appraised & synced successfully!`, "success");
+    }, 1500);
+  };
+
+  const getSimulatedMessageText = () => {
+    const itemsText = cart.map(item => `• ${item.quantity}x ${item.product.name} (Size: ${item.selectedSize}, Color: ${item.selectedColor.name}) - KSh ${item.product.price * item.quantity}`).join("\n");
+    
+    return `Atelier Debbie Garments Couture Order Appraised - Ref: ${generatedRef}
+
+Buyer Details:
+- Name: ${shippingName}
+- Status: ${currentUser ? (currentUser.role === "premium" ? "👑 Premium Member" : "💼 Business Owner") : "Guest User"}
+- Member Email: ${currentUser?.email || "Guest"}
+- Member Phone: ${currentUser?.phone || "None Synchronized"}
+
+Appraised Order Items:
+${itemsText}
+
+Subtotal: KSh ${cartSubtotal}
+Delivery Service: Complimentary
+Total Amount: KSh ${cartTotal}
+
+Delivery Courier Address:
+${shippingAddress}
+
+Regards,
+Debbie Garments Atelier System`;
+  };
+
+  const triggerWhatsApp = () => {
+    const text = encodeURIComponent(getSimulatedMessageText());
+    const cleanPhone = ownerPhone.replace(/[+\s-]/g, "");
+    window.open(`https://wa.me/${cleanPhone}?text=${text}`, "_blank");
+    addToast("Initiating secure WhatsApp order transmission...", "success");
+  };
+
+  const triggerEmail = () => {
+    const body = encodeURIComponent(getSimulatedMessageText());
+    const subject = encodeURIComponent(`Atelier Couture Order ${generatedRef} - ${shippingName}`);
+    window.open(`mailto:${ownerEmail}?subject=${subject}&body=${body}`, "_blank");
+    addToast("Initiating design desk secure email draft...", "success");
   };
 
   const closeCheckoutFlow = () => {
@@ -167,7 +262,7 @@ export const Navigation: React.FC = () => {
               onClick={() => setAccountOpen(true)}
               className="hidden sm:inline text-xs font-mono tracking-wider text-luxury-champagne hover:opacity-80 cursor-none max-w-[120px] truncate"
             >
-              Membership
+              {currentUser ? `👑 ${currentUser.fullName.split(" ")[0]}` : "Membership"}
             </button>
 
             {/* Dark Mode Toggle */}
@@ -501,28 +596,84 @@ export const Navigation: React.FC = () => {
               className="w-full max-w-lg bg-white dark:bg-matte-black h-full p-6 md:p-8 flex flex-col justify-between border-l border-zinc-200 dark:border-white/10 shadow-2xl text-zinc-800 dark:text-[#F5F5F5]"
             >
               {checkoutComplete ? (
-                // Checkout Success Screen
-                <div className="h-full flex flex-col justify-center items-center text-center px-4 font-sans">
-                  <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/25 border border-emerald-300 dark:border-emerald-500/25 flex items-center justify-center mb-6">
-                    <Sparkles className="w-8 h-8 text-emerald-500 dark:text-emerald-400" />
-                  </div>
-                  <h3 className="font-serif text-2xl font-light tracking-wide mb-3 text-zinc-950 dark:text-white">Order Transmitted</h3>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm mb-8 leading-relaxed font-light">
-                    Thank you. Your couture order has been securely simulated and queued at the Debbie Garmets Milan design house.
-                  </p>
-                  <div className="w-full bg-zinc-50 dark:bg-charcoal p-4 rounded-lg text-left text-xs space-y-2 mb-8 border border-zinc-200 dark:border-white/10">
-                    <div className="flex justify-between text-zinc-550 dark:text-zinc-400">
-                      <span>Order Reference:</span>
-                      <span className="font-mono text-zinc-900 dark:text-white font-semibold">#AR-{Math.floor(100000 + Math.random() * 900000)}</span>
+                // Checkout Success Screen & Notification Actions
+                <div className="h-full flex flex-col justify-between p-2 font-sans overflow-y-auto">
+                  <div className="flex flex-col items-center text-center mt-2">
+                    <div className="w-14 h-14 rounded-full bg-luxury-champagne/15 border border-luxury-champagne/40 flex items-center justify-center mb-4">
+                      <Sparkles className="w-6 h-6 text-luxury-champagne" />
                     </div>
-                    <div className="flex justify-between text-zinc-550 dark:text-zinc-400">
-                      <span>Dispatch:</span>
-                      <span className="text-zinc-900 dark:text-white font-mono">Express Courier (Complimentary)</span>
+                    <h3 className="font-serif text-xl font-light tracking-wide mb-2 text-zinc-950 dark:text-white">Order Synced Successfully</h3>
+                    <p className="text-xs text-zinc-550 dark:text-zinc-400 max-w-sm mb-6 leading-relaxed">
+                      Your premium garments have been logged in the local atelier queue. Select a channel below to notify the Business Owner immediately.
+                    </p>
+
+                    {/* Order Reference details card */}
+                    <div className="w-full bg-zinc-50 dark:bg-charcoal p-4 rounded-lg text-left text-xs space-y-2.5 mb-6 border border-zinc-200 dark:border-white/10">
+                      <div className="flex justify-between text-zinc-550 dark:text-zinc-400">
+                        <span>Order Reference:</span>
+                        <span className="font-mono text-zinc-900 dark:text-white font-semibold">{generatedRef}</span>
+                      </div>
+                      <div className="flex justify-between text-zinc-550 dark:text-zinc-400">
+                        <span>Appraisal value:</span>
+                        <span className="font-mono text-luxury-champagne font-bold">KSh {cartTotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-zinc-550 dark:text-zinc-400">
+                        <span>Buyer Name:</span>
+                        <span className="text-zinc-900 dark:text-white font-semibold">{shippingName}</span>
+                      </div>
+                      <div className="flex justify-between text-zinc-550 dark:text-zinc-400">
+                        <span>Buyer status:</span>
+                        <span className="text-zinc-900 dark:text-white uppercase tracking-wider text-[10px] font-mono">
+                          {currentUser ? currentUser.role : "Guest User"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Configurable notification channels */}
+                    <div className="w-full text-left space-y-3 mb-6 bg-zinc-50 dark:bg-charcoal/40 p-4 border border-zinc-150 dark:border-white/5 rounded-lg">
+                      <h4 className="text-[10px] uppercase font-mono tracking-widest text-zinc-500 mb-2">Notification Parameters</h4>
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider text-zinc-500 mb-1">Owner WhatsApp Phone</label>
+                        <input
+                          type="text"
+                          value={ownerPhone}
+                          onChange={(e) => setOwnerPhone(e.target.value)}
+                          placeholder="e.g. +254700000000"
+                          className="w-full text-xs p-2 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 text-zinc-900 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider text-zinc-505 mb-1">Owner Contact Email</label>
+                        <input
+                          type="text"
+                          value={ownerEmail}
+                          onChange={(e) => setOwnerEmail(e.target.value)}
+                          placeholder="e.g. owner@debbiegarmets.com"
+                          className="w-full text-xs p-2 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 text-zinc-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Quick Launch Buttons */}
+                    <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <button
+                        onClick={triggerWhatsApp}
+                        className="p-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-1.5 cursor-none"
+                      >
+                        Notify on WhatsApp
+                      </button>
+                      <button
+                        onClick={triggerEmail}
+                        className="p-3 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-lg transition-transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-1.5 cursor-none"
+                      >
+                        Notify via Email
+                      </button>
                     </div>
                   </div>
+
                   <button
                     onClick={closeCheckoutFlow}
-                    className="w-full bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-955 py-3.5 tracking-widest text-xs font-mono uppercase rounded-lg hover:bg-luxury-champagne dark:hover:bg-luxury-champagne hover:text-neutral-900 dark:hover:text-zinc-950 transition-colors cursor-none"
+                    className="w-full mt-6 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-955 py-3 tracking-widest text-xs font-mono uppercase rounded-lg hover:bg-luxury-champagne dark:hover:bg-luxury-champagne hover:text-neutral-900 dark:hover:text-zinc-950 transition-colors cursor-none"
                   >
                     Return to Atelier
                   </button>
@@ -650,7 +801,8 @@ export const Navigation: React.FC = () => {
                                 <input
                                   type="text"
                                   required
-                                  defaultValue="Marcus Aurelios"
+                                  value={shippingName}
+                                  onChange={(e) => setShippingName(e.target.value)}
                                   className="w-full text-xs p-2 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 focus:ring-luxury-champagne text-zinc-900 dark:text-white"
                                 />
                               </div>
@@ -659,7 +811,8 @@ export const Navigation: React.FC = () => {
                                 <input
                                   type="text"
                                   required
-                                  defaultValue="Villa Augusta, Via del Corso 24, Rome, IT"
+                                  value={shippingAddress}
+                                  onChange={(e) => setShippingAddress(e.target.value)}
                                   className="w-full text-xs p-2 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 focus:ring-luxury-champagne text-zinc-900 dark:text-white"
                                 />
                               </div>
@@ -696,61 +849,316 @@ export const Navigation: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-6"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md bg-white dark:bg-matte-black border border-zinc-200 dark:border-white/10 p-6 md:p-8 rounded-xl shadow-2xl relative text-zinc-850 dark:text-white"
+              className="w-full max-w-lg bg-white dark:bg-matte-black border border-zinc-200 dark:border-white/10 p-6 md:p-8 rounded-xl shadow-2xl relative text-zinc-850 dark:text-white max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setAccountOpen(false)}
-                className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-900 dark:hover:text-white cursor-none"
+                className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-900 dark:hover:text-white cursor-none z-10"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex flex-col items-center text-center mt-2">
-                <div className="w-16 h-16 rounded-full bg-luxury-champagne/15 border border-luxury-champagne/40 flex items-center justify-center mb-4">
-                  <Sparkles className="w-6 h-6 text-luxury-champagne" />
-                </div>
-                <h4 className="font-serif text-lg font-light tracking-wide text-zinc-950 dark:text-white">{userProfile.name}</h4>
-                <p className="text-xs text-zinc-550 dark:text-zinc-450 mt-1 font-mono font-light">{userProfile.email}</p>
-                <span className="mt-4 px-3 py-1 bg-luxury-champagne text-zinc-950 rounded-full font-mono text-[9px] uppercase tracking-widest font-semibold">
-                  {userProfile.tier}
-                </span>
-              </div>
+              {currentUser ? (
+                // LOGGED IN USER VIEW
+                <div className="space-y-6">
+                  <div className="flex flex-col items-center text-center mt-2">
+                    <div className="w-16 h-16 rounded-full bg-luxury-champagne/15 border border-luxury-champagne/40 flex items-center justify-center mb-4">
+                      <Sparkles className="w-6 h-6 text-luxury-champagne" />
+                    </div>
+                    <h4 className="font-serif text-lg font-light tracking-wide text-zinc-950 dark:text-white">
+                      {currentUser.fullName}
+                    </h4>
+                    <p className="text-xs text-zinc-550 dark:text-zinc-450 mt-1 font-mono font-light">
+                      {currentUser.email}
+                    </p>
+                    <span className="mt-3 px-3 py-1 bg-luxury-champagne text-zinc-950 rounded-full font-mono text-[9px] uppercase tracking-widest font-semibold flex items-center gap-1">
+                      {currentUser.role === "premium" ? "👑 Premium Member" : "💼 Business Owner"}
+                    </span>
+                  </div>
 
-              <div className="mt-8 space-y-4 border-t border-zinc-200 dark:border-white/10 pt-6">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-500 dark:text-zinc-400">Archived Shipments:</span>
-                  <span className="font-mono font-medium text-zinc-800 dark:text-zinc-200">3 Delivered</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-550 dark:text-zinc-400">Atelier Private Invites:</span>
-                  <span className="font-mono font-medium text-luxury-champagne flex items-center gap-1">
-                    Active <Sparkles className="w-3 h-3 text-luxury-champagne" />
-                  </span>
-                </div>
-              </div>
+                  {currentUser.role === "business_owner" && (
+                    <div className="border-t border-zinc-200 dark:border-white/10 pt-4 space-y-4 text-left">
+                      <div className="bg-zinc-50 dark:bg-charcoal p-3 rounded-lg text-xs space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-zinc-500">Business:</span>
+                          <span className="font-semibold text-zinc-900 dark:text-white">{currentUser.businessName || "Debbie Garmets"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-zinc-500">Owner WhatsApp:</span>
+                          <span className="font-semibold font-mono text-zinc-900 dark:text-white">{currentUser.phone || "Not Set"}</span>
+                        </div>
+                      </div>
 
-              <div className="mt-8 bg-zinc-50 dark:bg-charcoal border border-zinc-200 dark:border-white/10 p-4 rounded-lg flex gap-3 text-xs leading-relaxed text-zinc-650 dark:text-zinc-400 font-light">
-                <Info className="w-5 h-5 text-luxury-champagne flex-shrink-0" />
-                <p>
-                  Obsidian Elite members obtain private invitations to preview new capsule collections 48 hours prior to global launches.
-                </p>
-              </div>
+                      {/* Synced simulated checkout orders log */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center pb-1 border-b border-zinc-100 dark:border-white/5">
+                          <h5 className="font-serif text-sm font-medium text-luxury-champagne flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5" /> Synced Checkouts from Clients
+                          </h5>
+                          <button
+                            onClick={() => {
+                              localStorage.removeItem("aera-simulated-orders");
+                              addToast("Simulated order queue flushed", "info");
+                            }}
+                            className="text-[10px] font-mono text-rose-500 hover:underline cursor-none"
+                          >
+                            Flush Logs
+                          </button>
+                        </div>
 
-              <button
-                onClick={() => {
-                  setAccountOpen(false);
-                  addToast("Membership synchronized with local machine ID", "info");
-                }}
-                className="w-full mt-6 py-2.5 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 border border-transparent hover:bg-luxury-champagne dark:hover:bg-luxury-champagne hover:text-white dark:hover:text-zinc-950 transition-all text-xs uppercase tracking-widest font-mono cursor-none font-semibold rounded"
-              >
-                Synchronize Account
-              </button>
+                        {(() => {
+                          const savedOrdersStr = localStorage.getItem("aera-simulated-orders");
+                          const orders = savedOrdersStr ? JSON.parse(savedOrdersStr) : [];
+                          if (orders.length === 0) {
+                            return (
+                              <p className="text-xs text-zinc-400 italic text-center py-6 font-light">No client checkouts synced yet. Simulate checkout as Premium User to populate queue!</p>
+                            );
+                          }
+                          return (
+                            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                              {orders.map((order: any) => (
+                                <div key={order.id} className="p-3 bg-zinc-50 dark:bg-charcoal/50 rounded border border-zinc-150 dark:border-white/5 space-y-2 text-xs">
+                                  <div className="flex justify-between font-mono text-[9px] text-zinc-400">
+                                    <span className="text-luxury-champagne font-semibold font-sans">{order.id}</span>
+                                    <span>{order.date}</span>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-zinc-900 dark:text-white">Customer: {order.buyerName} ({order.buyerRole})</p>
+                                    <p className="text-[10px] text-zinc-400 truncate">Courier Addr: {order.address}</p>
+                                  </div>
+                                  <div className="border-t border-zinc-200 dark:border-white/10 pt-2 flex justify-between items-center text-[11px] font-mono">
+                                    <span className="text-zinc-500">{order.items?.length || 1} Custom Art(s)</span>
+                                    <span className="font-bold text-luxury-champagne">KSh {order.total?.toLocaleString()}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {currentUser.role === "premium" && (
+                    <div className="border-t border-zinc-200 dark:border-white/10 pt-4 space-y-4 text-left">
+                      <div className="bg-zinc-50 dark:bg-charcoal p-4 rounded-lg text-xs leading-relaxed text-zinc-650 dark:text-zinc-400 font-light flex gap-2.5">
+                        <Info className="w-4 h-4 text-luxury-champagne flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-zinc-900 dark:text-white mb-1">Your Premium Privileges Active</p>
+                          <p>
+                            Preferential pricing, complimentary couture packaging, and immediate order dispatch options are synchronized on your local account.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2 pt-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-zinc-500">Personal Synced Phone:</span>
+                          <span className="font-mono text-zinc-900 dark:text-white font-medium">{currentUser.phone || "+254711111111"}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-zinc-500">Capsule Access Key:</span>
+                          <span className="text-luxury-champagne font-semibold flex items-center gap-1 font-mono uppercase text-[10px]">
+                            Golden Gate <Sparkles className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-zinc-100 dark:border-white/5">
+                    <button
+                      onClick={() => {
+                        logoutUser();
+                        addToast("Logged out of Couture Desk", "info");
+                      }}
+                      className="w-full py-2.5 bg-rose-50 dark:bg-rose-950/20 text-rose-500 border border-rose-100 dark:border-rose-955/20 hover:bg-rose-500 hover:text-white transition-all text-xs uppercase tracking-widest font-mono cursor-none font-semibold rounded"
+                    >
+                      Logout Account
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // SIGN UP OR LOG IN MODE
+                <div className="font-sans space-y-5 text-left">
+                  <div className="text-center">
+                    <h3 className="font-serif text-2xl tracking-wide text-zinc-950 dark:text-white">
+                      {authTab === "login" ? "Atelier Sign In" : "Atelier Registration"}
+                    </h3>
+                    <p className="text-xs text-zinc-450 mt-1">
+                      {authTab === "login" ? "Access your premium profile or business portal" : "Register as a premium collector or boutique owner"}
+                    </p>
+                  </div>
+
+                  {/* Tabs Selector */}
+                  <div className="grid grid-cols-2 bg-zinc-100 dark:bg-white/5 p-1 rounded-lg text-xs font-mono">
+                    <button
+                      type="button"
+                      onClick={() => setAuthTab("login")}
+                      className={`py-1.5 rounded transition-all cursor-none ${authTab === "login" ? "bg-white dark:bg-matte-black text-luxury-champagne shadow font-semibold" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white"}`}
+                    >
+                      Login
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuthTab("signup")}
+                      className={`py-1.5 rounded transition-all cursor-none ${authTab === "signup" ? "bg-white dark:bg-matte-black text-luxury-champagne shadow font-semibold" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white"}`}
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+
+                  {/* Role Selector Input */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[9px] uppercase tracking-widest text-zinc-400 font-semibold font-mono">Account Level</label>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setAuthRole("premium")}
+                        className={`p-2 rounded border transition-all cursor-none ${authRole === "premium" ? "border-luxury-champagne bg-luxury-champagne/10 text-luxury-champagne font-bold" : "border-zinc-200 dark:border-white/10 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5"}`}
+                      >
+                        Premium User
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAuthRole("business_owner")}
+                        className={`p-2 rounded border transition-all cursor-none ${authRole === "business_owner" ? "border-luxury-champagne bg-luxury-champagne/10 text-luxury-champagne font-bold" : "border-zinc-200 dark:border-white/10 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5"}`}
+                      >
+                        Business Owner
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Auth Forms */}
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (authTab === "login") {
+                        const success = await loginUser(authEmail, authRole);
+                        if (success) {
+                          setAuthEmail("");
+                          setAccountOpen(false);
+                        }
+                      } else {
+                        if (!authFullName) {
+                          addToast("Please provide your full name", "error");
+                          return;
+                        }
+                        const success = await signupUser(
+                          authEmail,
+                          authFullName,
+                          authRole,
+                          authPhone,
+                          authBusinessName
+                        );
+                        if (success) {
+                          setAuthEmail("");
+                          setAuthFullName("");
+                          setAuthPhone("");
+                          setAuthBusinessName("");
+                          setAccountOpen(false);
+                        }
+                      }
+                    }}
+                    className="space-y-4"
+                  >
+                    {authTab === "signup" && (
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider text-zinc-500 mb-1 font-mono">Full Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={authFullName}
+                          onChange={(e) => setAuthFullName(e.target.value)}
+                          placeholder="e.g. Joel Hasty"
+                          className="w-full text-xs p-2.5 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 text-zinc-900 dark:text-white"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-[9px] uppercase tracking-wider text-zinc-500 mb-1 font-mono">Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                        placeholder="e.g. hastyjoel1@gmail.com"
+                        className="w-full text-xs p-2.5 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 text-zinc-900 dark:text-white"
+                      />
+                    </div>
+
+                    {authTab === "signup" && (
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider text-zinc-500 mb-1 font-mono">WhatsApp Phone Number</label>
+                        <input
+                          type="tel"
+                          value={authPhone}
+                          onChange={(e) => setAuthPhone(e.target.value)}
+                          placeholder="e.g. +254700000000"
+                          className="w-full text-xs p-2.5 bg-white dark:bg-transparent border border-zinc-205 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 text-zinc-900 dark:text-white"
+                        />
+                      </div>
+                    )}
+
+                    {authTab === "signup" && authRole === "business_owner" && (
+                      <div>
+                        <label className="block text-[9px] uppercase tracking-wider text-zinc-500 mb-1 font-mono">Boutique / Atelier Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={authBusinessName}
+                          onChange={(e) => setAuthBusinessName(e.target.value)}
+                          placeholder="e.g. Debbie Garments Kenya"
+                          className="w-full text-xs p-2.5 bg-white dark:bg-transparent border border-zinc-200 dark:border-white/10 rounded focus:border-luxury-champagne focus:outline-none focus:ring-1 text-zinc-900 dark:text-white"
+                        />
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="w-full py-3 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-950 font-semibold uppercase tracking-widest text-xs font-mono rounded hover:bg-luxury-champagne dark:hover:bg-luxury-champagne hover:text-zinc-950 dark:hover:text-zinc-950 transition-colors cursor-none"
+                    >
+                      {authTab === "login" ? "Access Atelier Profile" : "Register Couture Status"}
+                    </button>
+                  </form>
+
+                  {/* Demonstration Quick fill options */}
+                  <div className="border-t border-zinc-200 dark:border-white/10 pt-4 space-y-2">
+                    <p className="text-[10px] text-zinc-400 font-mono tracking-wider uppercase text-center font-bold">Demonstration Quick Logins</p>
+                    <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthRole("premium");
+                          setAuthEmail("premium@debbiegarmets.com");
+                          loginUser("premium@debbiegarmets.com", "premium").then(() => setAccountOpen(false));
+                        }}
+                        className="p-2 border border-dashed border-luxury-champagne/40 rounded text-center hover:bg-luxury-champagne/10 text-luxury-champagne cursor-none"
+                      >
+                        ⚡ Sample Premium
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthRole("business_owner");
+                          setAuthEmail("owner@debbiegarmets.com");
+                          loginUser("owner@debbiegarmets.com", "business_owner").then(() => setAccountOpen(false));
+                        }}
+                        className="p-2 border border-dashed border-luxury-champagne/40 rounded text-center hover:bg-luxury-champagne/10 text-luxury-champagne cursor-none"
+                      >
+                        ⚡ Sample Owner
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

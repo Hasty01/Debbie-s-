@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Product, CartItem } from "../types";
+import { Product, CartItem, UserAccount } from "../types";
 
 export interface Toast {
   id: string;
@@ -29,6 +29,12 @@ interface AppContextType {
   toasts: Toast[];
   addToast: (message: string, type?: "success" | "info" | "error") => void;
   removeToast: (id: string) => void;
+  currentUser: UserAccount | null;
+  authModalOpen: boolean;
+  setAuthModalOpen: (open: boolean) => void;
+  loginUser: (email: string, role: "premium" | "business_owner") => Promise<boolean>;
+  signupUser: (email: string, fullName: string, role: "premium" | "business_owner", phone?: string, businessName?: string) => Promise<boolean>;
+  logoutUser: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -54,6 +60,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem("aera-wishlist");
     return saved ? JSON.parse(saved) : [];
   });
+
+  // Synchronized authenticated user states
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    const saved = localStorage.getItem("aera-current-user");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Sync current user logic
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem("aera-current-user", JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem("aera-current-user");
+    }
+  }, [currentUser]);
 
   // UI modal toggles
   const [searchOpen, setSearchOpen] = useState(false);
@@ -167,6 +190,89 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return wishlist.some((item) => item.id === productId);
   };
 
+  // Login handler
+  const loginUser = async (email: string, role: "premium" | "business_owner"): Promise<boolean> => {
+    const usersStr = localStorage.getItem("aera-registered-users");
+    const users: UserAccount[] = usersStr ? JSON.parse(usersStr) : [];
+    
+    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.role === role);
+    
+    if (foundUser) {
+      setCurrentUser(foundUser);
+      addToast(`Welcome back, ${foundUser.fullName}! Locked as ${foundUser.role === "premium" ? "Premium Member" : "Business Owner"}.`, "success");
+      return true;
+    } else {
+      // Automatic quick mock onboarding for convenient demonstration
+      if (email.toLowerCase() === "admin@debbiegarmets.com" || email.toLowerCase() === "owner@debbiegarmets.com") {
+        const admin: UserAccount = {
+          email: email.toLowerCase(),
+          fullName: "Debbie Owner",
+          role: "business_owner",
+          phone: "+254700000000",
+          businessName: "Debbie Garmets HQ"
+        };
+        const updatedUsers = [...users, admin];
+        localStorage.setItem("aera-registered-users", JSON.stringify(updatedUsers));
+        setCurrentUser(admin);
+        addToast("Welcome back, Debbie (Business Owner)!", "success");
+        return true;
+      } else if (email.toLowerCase() === "premium@debbiegarmets.com") {
+        const prem: UserAccount = {
+          email: email.toLowerCase(),
+          fullName: "Gold Member",
+          role: "premium",
+          phone: "+254711111111"
+        };
+        const updatedUsers = [...users, prem];
+        localStorage.setItem("aera-registered-users", JSON.stringify(updatedUsers));
+        setCurrentUser(prem);
+        addToast("Welcome back, Premium Member!", "success");
+        return true;
+      }
+      
+      addToast("Account with this email & role not found. Please sign up!", "error");
+      return false;
+    }
+  };
+
+  // Signup handler
+  const signupUser = async (
+    email: string,
+    fullName: string,
+    role: "premium" | "business_owner",
+    phone?: string,
+    businessName?: string
+  ): Promise<boolean> => {
+    const usersStr = localStorage.getItem("aera-registered-users");
+    const users: UserAccount[] = usersStr ? JSON.parse(usersStr) : [];
+    
+    const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase() && u.role === role);
+    if (exists) {
+      addToast("An account with this email/role already exists.", "error");
+      return false;
+    }
+
+    const newUser: UserAccount = {
+      email: email.toLowerCase(),
+      fullName,
+      role,
+      phone,
+      businessName,
+    };
+
+    const updatedUsers = [...users, newUser];
+    localStorage.setItem("aera-registered-users", JSON.stringify(updatedUsers));
+    setCurrentUser(newUser);
+    addToast(`Account created successfully! Welcome, ${fullName}.`, "success");
+    return true;
+  };
+
+  // Logout handler
+  const logoutUser = () => {
+    setCurrentUser(null);
+    addToast("Logged out successfully.", "info");
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -191,6 +297,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toasts,
         addToast,
         removeToast,
+        currentUser,
+        authModalOpen,
+        setAuthModalOpen,
+        loginUser,
+        signupUser,
+        logoutUser,
       }}
     >
       {children}

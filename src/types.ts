@@ -54,3 +54,12 @@ export interface Testimonial {
   quote: string;
   rating: number;
 }
+
+export interface UserAccount {
+  email: string;
+  fullName: string;
+  role: "premium" | "business_owner";
+  phone?: string;
+  businessName?: string;
+}
+
