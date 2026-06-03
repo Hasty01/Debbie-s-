@@ -119,15 +119,15 @@ export const Navigation: React.FC = () => {
             <button
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Toggle menu"
-              className="text-current hover:text-luxury-champagne p-1.5 transition-colors cursor-none"
+              className="text-sky-400 hover:text-luxury-champagne p-1.5 transition-colors cursor-none"
             >
               <Menu className="w-5 h-5 md:w-6 h-6" />
             </button>
             
-            <nav className="hidden lg:flex items-center gap-8 text-[11px] font-medium tracking-[0.2em] uppercase text-zinc-500 dark:text-zinc-400">
-              <button onClick={() => jumpToSection("#collections")} className="hover:text-zinc-950 dark:hover:text-white transition-colors cursor-none">Atelier</button>
-              <button onClick={() => jumpToSection("#lookbook")} className="hover:text-zinc-950 dark:hover:text-white transition-colors cursor-none">Lookbook</button>
-              <button onClick={() => jumpToSection("#about")} className="hover:text-zinc-950 dark:hover:text-white transition-colors cursor-none">Story</button>
+            <nav className="hidden lg:flex items-center gap-8 text-[11px] font-medium tracking-[0.2em] uppercase">
+              <button onClick={() => jumpToSection("#collections")} className="text-luxury-champagne hover:text-sky-400 transition-colors cursor-none">Atelier</button>
+              <button onClick={() => jumpToSection("#lookbook")} className="text-sky-400 hover:text-luxury-champagne transition-colors cursor-none">Lookbook</button>
+              <button onClick={() => jumpToSection("#about")} className="text-luxury-champagne hover:text-sky-400 transition-colors cursor-none">Story</button>
             </nav>
           </div>
 
@@ -142,21 +142,22 @@ export const Navigation: React.FC = () => {
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }
               }}
-              className="font-serif text-lg md:text-2xl font-light tracking-[0.2em] text-current cursor-none hover:opacity-85 transition-opacity uppercase"
+              className="font-serif text-lg md:text-2xl font-light tracking-[0.2em] cursor-none hover:opacity-85 transition-opacity uppercase"
             >
-              Debbie Garmets
+              <span className="text-luxury-champagne">Debbie </span>
+              <span className="text-sky-400">Garmets</span>
             </span>
-            <span className="hidden md:inline text-[8px] font-mono tracking-[0.4em] uppercase text-luxury-champagne -mt-0.5">
+            <span className="hidden md:inline text-[8px] font-mono tracking-[0.4em] uppercase text-sky-400 -mt-0.5">
               atelier
             </span>
           </div>
 
           {/* Action Icons - Right */}
-          <div className="flex items-center gap-3 md:gap-4 text-current">
+          <div className="flex items-center gap-3 md:gap-4">
             {/* Search Toggle */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="p-1.5 hover:text-luxury-champagne transition-colors cursor-none"
+              className="p-1.5 text-luxury-champagne hover:text-sky-400 transition-colors cursor-none"
               title="Search collection"
             >
               <Search className="w-4 h-4 md:w-5 h-5" />
@@ -165,7 +166,7 @@ export const Navigation: React.FC = () => {
             {/* Profile Trigger */}
             <button
               onClick={() => setAccountOpen(true)}
-              className="hidden sm:inline text-xs font-mono tracking-wider hover:text-luxury-champagne cursor-none max-w-[120px] truncate"
+              className="hidden sm:inline text-xs font-mono tracking-wider text-sky-400 hover:text-luxury-champagne cursor-none max-w-[120px] truncate"
             >
               Membership
             </button>
@@ -173,7 +174,7 @@ export const Navigation: React.FC = () => {
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-1.5 hover:text-luxury-champagne transition-colors cursor-none"
+              className="p-1.5 text-sky-400 hover:text-luxury-champagne transition-colors cursor-none"
               title="Change atmosphere"
             >
               {theme === "dark" ? <Sun className="w-4 h-4 md:w-5 h-5" /> : <Moon className="w-4 h-4 md:w-5 h-5" />}
@@ -182,7 +183,7 @@ export const Navigation: React.FC = () => {
             {/* Wishlist Toggle */}
             <button
               onClick={() => setWishlistOpen(true)}
-              className="p-1.5 hover:text-luxury-champagne transition-colors relative cursor-none"
+              className="p-1.5 text-luxury-champagne hover:text-sky-400 transition-colors relative cursor-none"
               title="View wishlist"
             >
               <Heart className="w-4 h-4 md:w-5 h-5" />
@@ -196,7 +197,7 @@ export const Navigation: React.FC = () => {
             {/* Cart Trigger */}
             <button
               onClick={() => setCartOpen(true)}
-              className="p-1.5 hover:text-luxury-champagne transition-colors relative cursor-none"
+              className="p-1.5 text-sky-400 hover:text-luxury-champagne transition-colors relative cursor-none"
               title="Shopping bag"
             >
               <ShoppingBag className="w-4 h-4 md:w-5 h-5" />
