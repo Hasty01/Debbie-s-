@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700&family=Space+Mono&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", monospace;
+  
+  --color-gold-cream: #08080C;
+  --color-luxury-champagne: #D4AF37; /* Luxury Gold/Champagne as primary */
+  --color-luxury-sand: #24242A; /* Mid Charcoal */
+  --color-luxury-obsidian: #08080C; /* Matte Black */
+  --color-luxury-clay: #16161A; /* Charcoal */
+  
+  --color-matte-black: #08080C;
+  --color-charcoal: #16161A;
+  --color-elite-gold: #D4AF37; /* Elite Gold */
+  --color-neon-blue: #00F0FF;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  body {
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    background-color: #FAFAFB;
+    color: #121214;
+    transition: background-color 0.4s ease, color 0.4s ease;
+  }
+
+  .dark body {
+    background-color: var(--color-matte-black);
+    color: #F5F5F5;
+  }
+  
+  /* Selection styling */
+  ::selection {
+    background-color: var(--color-elite-gold);
+    color: #08080C;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #2C2C2C;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Glassmorphism custom classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.dark .glass-panel {
+  background: rgba(18, 18, 20, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.dark .glass-nav {
+  background: rgba(8, 8, 12, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Soft ambient lighting with luxury gold and neon blue */
+.ambient-glow {
+  background: radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.05) 0%, transparent 65%),
+              radial-gradient(circle at 75% 75%, rgba(0, 240, 255, 0.03) 0%, transparent 65%);
+}
+
+.dark .ambient-glow {
+  background: radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.12) 0%, transparent 65%),
+              radial-gradient(circle at 75% 75%, rgba(0, 240, 255, 0.08) 0%, transparent 65%);
+}
+
+/* Override custom cursor classes to restore native pointers */
+.cursor-none {
+  cursor: default !important;
+}
+
+button.cursor-none,
+a.cursor-none,
+[role="button"].cursor-none,
+select.cursor-none,
+.cursor-pointer-hover,
+option.cursor-none {
+  cursor: pointer !important;
+}

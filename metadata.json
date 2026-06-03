@@ -1,0 +1,6 @@
+{
+  "name": "Debbie Garmets",
+  "description": "A breathtaking, ultra-premium, modern luxury fashion boutique and high-concept editorial experience by Debbie Garmets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
